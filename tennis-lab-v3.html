@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>LT · Tennis Lab v3</title>
+<style>
+:root{
+  --bg:#f5f2ea;
+  --card:#fffdf8;
+  --text:#262622;
+  --muted:#77736a;
+  --line:#ded9cd;
+  --accent:#2f5f49;
+  --miss:#8a5b2c;
+  --court:#d9b675;
+  --wall:#bfc6bf;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Noto Sans CJK SC","Microsoft YaHei",sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:760px;margin:0 auto;padding:18px 14px 40px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:15px;margin:12px 0}
+h1{font-size:22px;margin:0 0 5px}
+.sub,.hint{color:var(--muted);font-size:13px;line-height:1.55}
+.arena{
+  margin-top:14px;border-radius:16px;overflow:hidden;border:1px solid var(--line);
+  background:#d2d8d1;
+}
+svg{display:block;width:100%;height:auto;aspect-ratio:16/9}
+.wall{fill:#c3cac3}
+.floor{fill:#ddb979}
+.courtline{stroke:#9b7644;stroke-width:1.3}
+.netpost{stroke:#5d6d70;stroke-width:2}
+.net{stroke:#c9d9da;stroke-width:1}
+.stick{
+  fill:none;stroke:#171717;stroke-width:4.2;stroke-linecap:round;stroke-linejoin:round;
+}
+.head{fill:#fffdf8;stroke:#171717;stroke-width:3.6}
+.racket{fill:none;stroke:#171717;stroke-width:3.1}
+.racket-string{stroke:#777;stroke-width:.7;opacity:.55}
+.ball{fill:#e8d84f;stroke:#8f7f21;stroke-width:1.3}
+.shadow{fill:rgba(0,0,0,.12)}
+.controls{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+button{border:0;border-radius:13px;padding:12px;font-weight:650;font-size:14px}
+.primary{background:var(--accent);color:#fff}
+.soft{background:#e7efe9;color:var(--accent)}
+.sand{background:#f5eadb;color:var(--miss)}
+.status{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-top:10px;font-size:13px}
+.status b{color:var(--accent)}
+.status.miss b{color:var(--miss)}
+.note{margin-top:12px;color:var(--muted);font-size:12px;line-height:1.55}
+@media(max-width:520px){
+  .controls{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div>
+    <h1>LT · Tennis Lab v3</h1>
+    <div class="sub">改成真正的“柔软线条火柴人”：没有衣服和体块，身体由连续曲线构成，动作靠姿态形变而不是木棍旋转。</div>
+  </div>
+
+  <section class="card">
+    <div class="arena">
+      <svg id="scene" viewBox="0 0 800 450" aria-label="Tennis stick figure animation">
+        <rect class="wall" x="0" y="0" width="800" height="300"/>
+        <rect class="floor" x="0" y="300" width="800" height="150"/>
+        <line class="courtline" x1="0" y1="320" x2="800" y2="320"/>
+        <line class="courtline" x1="95" y1="300" x2="70" y2="450"/>
+        <line class="courtline" x1="705" y1="300" x2="730" y2="450"/>
+        <line class="courtline" x1="0" y1="382" x2="800" y2="382"/>
+
+        <line class="netpost" x1="400" y1="248" x2="400" y2="330"/>
+        <line class="netpost" x1="407" y1="255" x2="407" y2="330"/>
+        <g id="netLines">
+          <line class="net" x1="400" y1="252" x2="454" y2="304"/>
+          <line class="net" x1="400" y1="261" x2="447" y2="306"/>
+          <line class="net" x1="400" y1="270" x2="440" y2="308"/>
+          <line class="net" x1="400" y1="279" x2="433" y2="310"/>
+          <line class="net" x1="400" y1="288" x2="426" y2="312"/>
+          <line class="net" x1="400" y1="297" x2="419" y2="314"/>
+          <line class="net" x1="407" y1="255" x2="407" y2="315"/>
+          <line class="net" x1="416" y1="264" x2="416" y2="315"/>
+          <line class="net" x1="425" y1="273" x2="425" y2="315"/>
+          <line class="net" x1="434" y1="282" x2="434" y2="315"/>
+          <line class="net" x1="443" y1="291" x2="443" y2="315"/>
+        </g>
+
+        <ellipse id="bodyShadow" class="shadow" cx="620" cy="382" rx="45" ry="8"/>
+
+        <g id="player">
+          <circle id="head" class="head" cx="620" cy="215" r="17"/>
+          <path id="spine" class="stick" d="M620,235 Q618,270 617,305"/>
+          <path id="armBack" class="stick" d="M618,248 Q598,265 584,287"/>
+          <path id="armRacket" class="stick" d="M621,248 Q645,254 662,273"/>
+          <path id="legBack" class="stick" d="M617,305 Q600,332 590,369"/>
+          <path id="legFront" class="stick" d="M617,305 Q636,331 649,370"/>
+          <path id="racketHandle" class="racket" d="M662,273 Q677,249 691,227"/>
+          <g id="racketHead" transform="translate(695 217) rotate(-28)">
+            <ellipse class="racket" cx="0" cy="0" rx="19" ry="30"/>
+            <line class="racket-string" x1="-13" y1="-20" x2="13" y2="20"/>
+            <line class="racket-string" x1="-13" y1="-10" x2="13" y2="10"/>
+            <line class="racket-string" x1="-13" y1="0" x2="13" y2="0"/>
+            <line class="racket-string" x1="-13" y1="10" x2="13" y2="-10"/>
+            <line class="racket-string" x1="-13" y1="20" x2="13" y2="-20"/>
+          </g>
+        </g>
+
+        <ellipse id="ballShadow" class="shadow" cx="110" cy="382" rx="10" ry="3" opacity="0"/>
+        <circle id="ball" class="ball" cx="110" cy="250" r="7" opacity="0"/>
+      </svg>
+    </div>
+
+    <div class="status" id="status">
+      <span id="statusText"><b>准备好了。</b> 先看动作是不是“软”起来了。</span>
+      <span id="score">0 / 0</span>
+    </div>
+
+    <div class="controls">
+      <button class="primary" id="random">来一球（随机）</button>
+      <button class="soft" id="hit">接到</button>
+      <button class="sand" id="miss">漏掉</button>
+    </div>
+
+    <div class="note">这一版刻意保留极简火柴人：圆头、黑色柔线、夸张球拍。重点是身体会压低、弯曲、前送、回弹，而不是关节像木棍一样转。</div>
+  </section>
+</div>
+
+<script>
+(() => {
+  const $ = s => document.querySelector(s);
+  const head = $("#head"), spine=$("#spine"), armBack=$("#armBack"), armRacket=$("#armRacket"),
+        legBack=$("#legBack"), legFront=$("#legFront"), racketHandle=$("#racketHandle"),
+        racketHead=$("#racketHead"), ball=$("#ball"), ballShadow=$("#ballShadow"),
+        bodyShadow=$("#bodyShadow"), status=$("#status"), statusText=$("#statusText"), score=$("#score");
+
+  let busy=false, hits=0, misses=0;
+
+  const poses = {
+    ready:{
+      head:[620,215], spine:[[620,235],[618,270],[617,305]],
+      armBack:[[618,248],[598,265],[584,287]],
+      armRacket:[[621,248],[645,254],[662,273]],
+      legBack:[[617,305],[600,332],[590,369]],
+      legFront:[[617,305],[636,331],[649,370]],
+      racketHandle:[[662,273],[677,249],[691,227]],
+      racket:[695,217,-28], shadow:[620,382,45]
+    },
+    coil:{
+      head:[611,221], spine:[[613,240],[603,273],[607,308]],
+      armBack:[[610,251],[586,264],[570,284]],
+      armRacket:[[614,250],[640,244],[665,251]],
+      legBack:[[607,308],[586,332],[577,369]],
+      legFront:[[607,308],[630,334],[646,370]],
+      racketHandle:[[665,251],[681,231],[696,210]],
+      racket:[702,201,-45], shadow:[610,382,47]
+    },
+    hit:{
+      head:[629,211], spine:[[625,235],[634,267],[636,304]],
+      armBack:[[626,248],[606,271],[596,292]],
+      armRacket:[[628,246],[657,255],[687,270]],
+      legBack:[[636,304],[615,332],[603,368]],
+      legFront:[[636,304],[654,330],[668,367]],
+      racketHandle:[[687,270],[704,249],[719,227]],
+      racket:[724,216,12], shadow:[635,382,48]
+    },
+    miss:{
+      head:[628,214], spine:[[624,237],[633,271],[635,305]],
+      armBack:[[625,250],[607,271],[597,291]],
+      armRacket:[[628,248],[654,257],[676,278]],
+      legBack:[[635,305],[615,333],[604,369]],
+      legFront:[[635,305],[653,331],[667,368]],
+      racketHandle:[[676,278],[693,259],[706,241]],
+      racket:[711,232,-2], shadow:[635,382,47]
+    },
+    recover:{
+      head:[620,216], spine:[[620,236],[618,272],[617,305]],
+      armBack:[[618,249],[598,267],[585,288]],
+      armRacket:[[621,249],[645,257],[663,274]],
+      legBack:[[617,305],[600,333],[590,369]],
+      legFront:[[617,305],[636,332],[649,370]],
+      racketHandle:[[663,274],[678,251],[692,229]],
+      racket:[696,219,-26], shadow:[620,382,45]
+    }
+  };
+
+  const lerp=(a,b,t)=>a+(b-a)*t;
+  const ease=t=>t<.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2;
+
+  function mixPoint(a,b,t){return [lerp(a[0],b[0],t),lerp(a[1],b[1],t)]}
+  function path3(points){
+    return `M${points[0][0].toFixed(1)},${points[0][1].toFixed(1)} Q${points[1][0].toFixed(1)},${points[1][1].toFixed(1)} ${points[2][0].toFixed(1)},${points[2][1].toFixed(1)}`;
+  }
+  function drawPose(p){
+    head.setAttribute("cx",p.head[0]); head.setAttribute("cy",p.head[1]);
+    spine.setAttribute("d",path3(p.spine));
+    armBack.setAttribute("d",path3(p.armBack));
+    armRacket.setAttribute("d",path3(p.armRacket));
+    legBack.setAttribute("d",path3(p.legBack));
+    legFront.setAttribute("d",path3(p.legFront));
+    racketHandle.setAttribute("d",path3(p.racketHandle));
+    racketHead.setAttribute("transform",`translate(${p.racket[0]} ${p.racket[1]}) rotate(${p.racket[2]})`);
+    bodyShadow.setAttribute("cx",p.shadow[0]); bodyShadow.setAttribute("rx",p.shadow[2]);
+  }
+  function mixPose(a,b,t){
+    const m={};
+    m.head=mixPoint(a.head,b.head,t);
+    for(const k of ["spine","armBack","armRacket","legBack","legFront","racketHandle"])
+      m[k]=a[k].map((pt,i)=>mixPoint(pt,b[k][i],t));
+    m.racket=[lerp(a.racket[0],b.racket[0],t),lerp(a.racket[1],b.racket[1],t),lerp(a.racket[2],b.racket[2],t)];
+    m.shadow=[lerp(a.shadow[0],b.shadow[0],t),382,lerp(a.shadow[2],b.shadow[2],t)];
+    return m;
+  }
+
+  function animatePose(from,to,duration){
+    return new Promise(resolve=>{
+      const start=performance.now();
+      function frame(now){
+        let t=Math.min(1,(now-start)/duration);
+        drawPose(mixPose(from,to,ease(t)));
+        if(t<1) requestAnimationFrame(frame); else resolve();
+      }
+      requestAnimationFrame(frame);
+    });
+  }
+
+  function cubic(p0,p1,p2,p3,t){
+    const u=1-t;
+    return [
+      u*u*u*p0[0]+3*u*u*t*p1[0]+3*u*t*t*p2[0]+t*t*t*p3[0],
+      u*u*u*p0[1]+3*u*u*t*p1[1]+3*u*t*t*p2[1]+t*t*t*p3[1]
+    ];
+  }
+
+  function animateBall(mode,duration=900){
+    return new Promise(resolve=>{
+      const start=performance.now();
+      ball.setAttribute("opacity","1"); ballShadow.setAttribute("opacity",".15");
+      const p0=[110,255], p1=[270,160], p2=[520,170], p3=mode==="hit"?[700,236]:[735,300];
+      const returnP1=[690,215], returnP2=[500,120], returnP3=[330,170];
+      function frame(now){
+        const t=Math.min(1,(now-start)/duration);
+        let p;
+        if(mode==="hit" && t>.67){
+          const tt=(t-.67)/.33;
+          p=cubic(p3,returnP1,returnP2,returnP3,tt);
+        }else{
+          const tt=mode==="hit"?t/.67:t;
+          p=cubic(p0,p1,p2,p3,Math.min(1,tt));
+        }
+        ball.setAttribute("cx",p[0]); ball.setAttribute("cy",p[1]);
+        ballShadow.setAttribute("cx",p[0]); 
+        ballShadow.setAttribute("rx",8+8*Math.max(0,1-p[1]/320));
+        if(t<1) requestAnimationFrame(frame);
+        else { setTimeout(()=>{ball.setAttribute("opacity","0");ballShadow.setAttribute("opacity","0");resolve();},80); }
+      }
+      requestAnimationFrame(frame);
+    });
+  }
+
+  async function play(mode){
+    if(busy) return;
+    busy=true;
+    status.className="status";
+    statusText.innerHTML="<b>来球。</b> 身体先收一下。";
+    drawPose(poses.ready);
+
+    const ballP=animateBall(mode,980);
+    await animatePose(poses.ready,poses.coil,240);
+
+    await new Promise(r=>setTimeout(r,120));
+    statusText.innerHTML = mode==="hit" ? "<b>接到了。</b> 顺着动作把拍子送出去。" : "<b>差一点。</b> 球从拍边过去。";
+    await animatePose(poses.coil,mode==="hit"?poses.hit:poses.miss,320);
+    await ballP;
+
+    await animatePose(mode==="hit"?poses.hit:poses.miss,poses.recover,300);
+    await animatePose(poses.recover,poses.ready,220);
+
+    if(mode==="hit"){
+      hits++; statusText.innerHTML="<b>这一球接住了。</b> 下一球再说。";
+    }else{
+      misses++; status.className="status miss"; statusText.innerHTML="<b>这一球没接到。</b> 球已经过去了，下一球还会来。";
+    }
+    score.textContent=`${hits} / ${misses}`;
+    busy=false;
+  }
+
+  $("#random").onclick=()=>play(Math.random()<.6?"hit":"miss");
+  $("#hit").onclick=()=>play("hit");
+  $("#miss").onclick=()=>play("miss");
+
+  drawPose(poses.ready);
+})();
+</script>
+</body>
+</html>
